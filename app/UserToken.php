@@ -58,7 +58,7 @@ class UserToken extends Model
     
     public function isExpired()
 	{
-	    return $this->created_at->diffInSeconds(Carbon::now()) > Carbon::parse('-15 minutes');
+	    return $this->created_at->diffInMinutes(Carbon::now()) > 5;
 	}
     
     public function user()
