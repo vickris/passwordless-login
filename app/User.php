@@ -28,4 +28,12 @@ class User extends Authenticatable
     {
         return $this->hasOne(UserToken::class);
     }
+    
+    
+    
+    protected static function getUserByEmail($value)
+    {
+        return self::where('email', $value)->firstOrFail();
+    }
+    
 }

@@ -14,13 +14,11 @@ class UserToken extends Model
     
     
    
-    public static function storeToken(Request $request)
+    public static function storeToken($request)
     {
         
-        $user = self::getUserByEmail($request->get('email'));
-        
-        
-        $user->token->delete();
+        $user = User::getUserByEmail($request->get('email'));
+        // $user->token->delete();
         
         return self::create([
             'user_id' => $user->id,
@@ -28,16 +26,12 @@ class UserToken extends Model
         ]);
     }
     
-    protected static function getUserByEmail($value)
+    
+    
+    
+    protected static function sendMail($request, array $options)
     {
-        return User::where('email', $value)->firstOrFail();
-    }
-    
-    
-    
-    protected static function sendMail(Request $request, array $options)
-    {
-        $user = self::getUserByEmail($request->get('email'));
+        $user = User::getUserByEmail($request->get('email'));
         
         $url = url('/login/magiclink/' . $user->token->token . '?' . http_build_query($options));
         
@@ -60,6 +54,23 @@ class UserToken extends Model
 	{
 	    return $this->created_at->diffInMinutes(Carbon::now()) > 5;
 	}
+	
+	public function belongsToEmail($email)
+    {  
+        $user = User::where('email', $email)->firstOrFail();
+        
+        
+        if (!$user) {
+            //if no record was found in the database
+            return false;
+        } elseif(!$user->token) {
+            //if record was found but no token is associated with it
+            return false;
+        } else {
+            //if the record found has a token and the token value matches what was sent in the email
+            return (bool) ($this->token === $user->token->token);
+        }
+    }
     
     public function user()
     {

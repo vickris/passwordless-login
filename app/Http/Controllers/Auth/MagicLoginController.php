@@ -30,7 +30,7 @@ class MagicLoginController extends Controller
         ]);
         
         
-        return back()->with('success', 'We\'ve sent you a magic link! The link expireres in 5 minutes');
+        return back()->with('success', 'We\'ve sent you a magic link! The link expires in 5 minutes');
         
     }
     
@@ -39,12 +39,21 @@ class MagicLoginController extends Controller
     public function authenticate(Request $request, UserToken $token)
     {
         if ($token->isExpired()) {
+            $token->delete();
             return back()->with('error', 'That magic link has expired.');
+        }
+        
+        if (!$token->belongsToEmail($request->email)) {
+            $token->delete();
+            return back()->with('/login/magiclink')->with('error', 'Invalid magic link. Resubmit email address again to receive a new magic link');
         }
         
         Auth::login($token->user, $request->remember);
         
+        $token->delete();
+        
         return redirect('home');
+        
     }
     
 }
