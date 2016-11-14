@@ -16,7 +16,7 @@ class MagicLoginController extends Controller
         return view('auth.magic.login');
     }
     
-    public function sendToken(Request $request)
+    public function sendToken(Request $request, UserToken $token)
     {
         $this->validate($request, [
             'email' => 'required|email|max:255|exists:users,email'
@@ -24,10 +24,7 @@ class MagicLoginController extends Controller
         
         UserToken::storeToken($request);
         
-        UserToken::sendMail($request, [
-            'remember' => $request->has('remember'),
-            'email' => $request->get('email'),
-        ]);
+        UserToken::sendMail($request);
         
         
         return back()->with('success', 'We\'ve sent you a magic link! The link expires in 5 minutes');

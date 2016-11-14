@@ -18,7 +18,6 @@ class UserToken extends Model
     {
         
         $user = User::getUserByEmail($request->get('email'));
-        // $user->token->delete();
         
         return self::create([
             'user_id' => $user->id,
@@ -27,13 +26,14 @@ class UserToken extends Model
     }
     
     
-    
-    
-    protected static function sendMail($request, array $options)
+    public static function sendMail($request)
     {
         $user = User::getUserByEmail($request->get('email'));
         
-        $url = url('/login/magiclink/' . $user->token->token . '?' . http_build_query($options));
+        $url = url('/login/magiclink/' . $user->token->token . '?' . http_build_query([
+            'remember' => $request->get('remember'),
+            'email' => $request->get('email'),
+        ]));
         
         Mail::raw(
             "<a href='{$url}'>{$url}</a>",
@@ -57,13 +57,10 @@ class UserToken extends Model
 	
 	public function belongsToEmail($email)
     {  
-        $user = User::where('email', $email)->firstOrFail();
+        $user = User::getUserByEmail($email);
         
         
-        if (!$user) {
-            //if no record was found in the database
-            return false;
-        } elseif(!$user->token) {
+        if(!$user->token) {
             //if record was found but no token is associated with it
             return false;
         } else {
