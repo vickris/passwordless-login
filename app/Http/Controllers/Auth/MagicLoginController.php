@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use Auth;
+use App\User;
 use App\UserToken;
 use Illuminate\Http\Request;
 use App\Http\Requests;
@@ -22,7 +23,17 @@ class MagicLoginController extends Controller
             'email' => 'required|email|max:255|exists:users,email'
         ]);
         
-        UserToken::storeToken($request);
+        $user = User::getUserByEmail($request->get('email'));
+        
+        
+        if (!$user) {
+            return redirect('/login/magiclink')->with('error', 'Please sign up');
+        }
+        
+        UserToken::create([
+            'user_id' => $user->id,
+            'token'   => str_random(50)
+        ]);
         
         UserToken::sendMail($request);
         
@@ -37,12 +48,12 @@ class MagicLoginController extends Controller
     {
         if ($token->isExpired()) {
             $token->delete();
-            return back()->with('error', 'That magic link has expired.');
+            return redirect('/login/magiclink')->with('error', 'That magic link has expired.');
         }
         
-        if (!$token->belongsToEmail($request->email)) {
+        if (!$token->belongsToUser($request->email)) {
             $token->delete();
-            return back()->with('/login/magiclink')->with('error', 'Invalid magic link. Resubmit email address again to receive a new magic link');
+            return redirect('/login/magiclink')->with('error', 'Invalid magic link. Resubmit email address again to receive a new magic link');
         }
         
         Auth::login($token->user, $request->remember);

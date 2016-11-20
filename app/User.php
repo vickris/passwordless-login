@@ -2,6 +2,7 @@
 
 namespace App;
 
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 
 class User extends Authenticatable
@@ -33,7 +34,10 @@ class User extends Authenticatable
     
     protected static function getUserByEmail($value)
     {
-        return self::where('email', $value)->firstOrFail();
+        $user = self::where('email', $value)->first();
+        
+        return $user;
+        
     }
     
 }

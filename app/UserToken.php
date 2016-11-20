@@ -4,7 +4,7 @@ namespace App;
 
 use App\User;
 use Carbon\Carbon;
-use Illuminate\Http\Request;
+// use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Mail;
 
@@ -13,22 +13,14 @@ class UserToken extends Model
     protected $fillable = ['user_id', 'token'];
     
     
-   
-    public static function storeToken($request)
-    {
-        
-        $user = User::getUserByEmail($request->get('email'));
-        
-        return self::create([
-            'user_id' => $user->id,
-            'token'   => str_random(50)
-        ]);
-    }
-    
     
     public static function sendMail($request)
     {
         $user = User::getUserByEmail($request->get('email'));
+        
+        if(!$user) {
+            return redirect('/login/magiclink')->with('error', 'User not foud. PLease sign up');
+        }
         
         $url = url('/login/magiclink/' . $user->token->token . '?' . http_build_query([
             'remember' => $request->get('remember'),
@@ -55,17 +47,20 @@ class UserToken extends Model
 	    return $this->created_at->diffInMinutes(Carbon::now()) > 5;
 	}
 	
-	public function belongsToEmail($email)
+	public function belongsToUser($email)
     {  
+        
         $user = User::getUserByEmail($email);
         
         
-        if(!$user->token) {
+        if(!$user) {
+            return false;
+        } elseif ($user->token == null) {
             //if record was found but no token is associated with it
             return false;
         } else {
             //if the record found has a token and the token value matches what was sent in the email
-            return (bool) ($this->token === $user->token->token);
+            return ($this->token === $user->token->token);
         }
     }
     
